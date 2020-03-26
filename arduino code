@@ -20,10 +20,14 @@ char ssid[] = "";       // your network SSID (name)
 char password[] = "";  // your network key
  
 //The name of the channel that you want the bot to join
-const String twitchChannelName = "noycebru";
+//This is case sensitive, if you have connection issues try all lower case.
+//This needs to be your main Twitch account, not your bot account, or chat bot
+const String twitchChannelName = "noycebru"; 
  
 //The name that you want the bot to have
-#define TWITCH_BOT_NAME "noycebru"
+//This is case sensitive, if you have connection issues try all lower case.
+//This needs to be your main Twitch account, not your bot account, or chat bot.
+#define TWITCH_BOT_NAME "noycebru" //this is case sensitive, if you have connection issues try all lower case. 
  
 //OAuth Key for your twitch bot
 // https://twitchapps.com/tmi/
