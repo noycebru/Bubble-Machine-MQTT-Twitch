@@ -57,7 +57,7 @@ void setupWIFI() {
 }
 
 void setupMQTT() {
-  client.setServer(MQTT_BROKER.c_str(), 1883);
+  client.setServer(MQTT_BROKER.c_str(), MQTT_PORT);
   client.setCallback(callback);// Initialize the callback routine
 }
 
@@ -86,8 +86,8 @@ void reconnectClient() {
       }
     } else {
       Serial.println(" try again in 5 seconds");
-      // Wait 5 seconds before retrying
-      delay(5000);
+      // Wait before retrying
+      delay(MQTT_RECONNECT_DELAY);
     }
     Serial.println('\n');
   }
