@@ -1,130 +1,128 @@
 /*******************************************************************
-    Connect to Twtich Chat with a Bot
-   Created with code from TheOtherLoneStar (https://www.twitch.tv/theotherlonestar)
-   Hackaday IO: https://hackaday.io/otherlonestar
-   By Brian Lough (https://www.twitch.tv/brianlough)
-   YouTube: https://www.youtube.com/channel/UCezJOfu7OtqGzd5xrP3q6WA
-Created with code from noycebru www.twitch.tv/noycebru
+  Connect to local MQTT server with a Bot
+
+  ESP8266 library from https://github.com/esp8266/Arduino
+
+  Created for noycebru www.twitch.tv/noycebru
  *******************************************************************/
- 
-#include <ESP8266WiFi.h>          //https://github.com/esp8266/Arduino
-#include <IRCClient.h>
- 
-//define your default values here, if there are different values in config.json, they are overwritten.
- 
-#define IRC_SERVER   "irc.chat.twitch.tv"
-#define IRC_PORT     6667
- 
-//------- Replace the following! ------
-char ssid[] = "";       // your network SSID (name)
-char password[] = "";  // your network key
- 
-//The name of the channel that you want the bot to join
-//This is case sensitive, if you have connection issues try all lower case.
-//This needs to be your main Twitch account, not your bot account, or chat bot
-const String twitchChannelName = "noycebru"; 
- 
-//The name that you want the bot to have
-//This is case sensitive, if you have connection issues try all lower case.
-//This needs to be your main Twitch account, not your bot account, or chat bot.
-#define TWITCH_BOT_NAME "noycebru" //this is case sensitive, if you have connection issues try all lower case. 
- 
-//OAuth Key for your twitch bot
-// https://twitchapps.com/tmi/
-#define TWITCH_OAUTH_TOKEN "oauth:"
- 
- 
+#include "bubble-machine.h"
+#include <ESP8266WiFi.h>
+#include <PubSubClient.h>
+
 //------------------------------
- 
- 
-int led = 5;
-String ircChannel = "";
- 
 WiFiClient wiFiClient;
-IRCClient client(IRC_SERVER, IRC_PORT, wiFiClient);
- 
-// put your setup code here, to run once:
+PubSubClient client(wiFiClient); // MQTT client
+
+// Put your setup code here, to run once:
 void setup() {
+
+  setupSerial();
+
+  setupPins();
+
+  setupWIFI();
  
-  pinMode(led, OUTPUT);
- 
+  setupWIFI();
+
+  setupMQTT();
+}
+
+void setupSerial() {
   Serial.begin(115200);
   Serial.println();
- 
-  // Set WiFi to station mode and disconnect from an AP if it was Previously
-  // connected
-  WiFi.mode(WIFI_STA);
-  WiFi.disconnect();
-  delay(100);
- 
+}
+
+void setupPins() {
+    pinMode(LED_PIN, OUTPUT);
+}
+
+void setupWIFI() {
   // Attempt to connect to Wifi network:
   Serial.print("Connecting Wifi: ");
-  Serial.println(ssid);
-  WiFi.begin(ssid, password);
+  Serial.println(WIFI_SSID);
+
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+
   while (WiFi.status() != WL_CONNECTED) {
     Serial.print(".");
     delay(500);
   }
+
   Serial.println("");
   Serial.println("WiFi connected");
   Serial.println("IP address: ");
+
   IPAddress ip = WiFi.localIP();
   Serial.println(ip);
- 
-  ircChannel = "#" + twitchChannelName;
- 
-  client.setCallback(callback);
 }
- 
+
+void setupMQTT() {
+  client.setServer(MQTT_BROKER.c_str(), 1883);
+  client.setCallback(callback);// Initialize the callback routine
+}
+
 void loop() {
- 
-  // Try to connect to chat. If it loses connection try again
-  if (!client.connected()) {
-    Serial.println("Attempting to connect to " + ircChannel );
+  // Check to make sure we are connected to the mqtt server
+  reconnectClient();
+
+  // Tell the mqtt client to process its loop
+  client.loop();
+}
+
+// Reconnect to client
+void reconnectClient() {
+  // Loop until we're reconnected
+  while (!client.connected()) {
+    Serial.println("Attempting MQTT connection...");
     // Attempt to connect
-    // Second param is not needed by Twtich
-    if (client.connect(TWITCH_BOT_NAME, "", TWITCH_OAUTH_TOKEN)) {
-      client.sendRaw("JOIN " + ircChannel);
-      Serial.println("connected and ready to rock");
-      sendTwitchMessage("Ready to go Boss!");
+    if(client.connect(MQTT_ID.c_str())) {
+
+      Serial.println("Connected!");
+
+      for(int i=0;i < MQTT_TOPIC_COUNT;i++){
+        client.subscribe(MQTT_TOPIC[i].c_str());
+        Serial.print("Subcribed to: ");
+        Serial.println(MQTT_TOPIC[i]);
+      }
     } else {
-      Serial.println("failed... try again in 5 seconds");
+      Serial.println(" try again in 5 seconds");
       // Wait 5 seconds before retrying
       delay(5000);
     }
-    return;
+    Serial.println('\n');
   }
-  client.loop();
 }
- 
-void sendTwitchMessage(String message) {
-  client.sendMessage(ircChannel, message);
-}
- 
- 
-void callback(IRCMessage ircMessage) {
-  //Serial.println("In CallBack");
- 
-  if (ircMessage.command == "PRIVMSG" && ircMessage.text[0] != '\001') {
-    //Serial.println("Passed private message.");
-   
-    ircMessage.nick.toUpperCase();
- 
-    String message("<" + ircMessage.nick + "> " + ircMessage.text);
- 
-    //prints chat to serial
-    Serial.println(message);
-if (ircMessage.text.indexOf("subscribed") > -1 && ircMessage.nick == "STREAMELEMENTS")
-      {
-     
-      digitalWrite(led, HIGH);
-      delay(10000);
-      digitalWrite(led, LOW);
-      delay(25);
-   
-    }
- 
- 
-    return;
+
+// Handle incomming messages from the broker
+void callback(char* topic, byte* payload, unsigned int length) {
+  String response;
+  String msgTopic = String(topic);
+
+  Serial.println("topic received message:");
+  Serial.println(msgTopic);
+
+  for (int i = 0; i < length; i++) {
+    response += (char)payload[i];
   }
+  Serial.print("Message arrived [");
+  Serial.print(topic);
+  Serial.println("] ");
+  Serial.println(response);
+
+  // TODO: find the correct value to insert
+  if((response.indexOf("subscriber") > -1) || (response.indexOf("slap-redeem-id-here") > -1))
+  {
+    // We need to turn the bubbles on
+    activateBubbles();
+  }
+}
+
+void activateBubbles() {
+
+  Serial.print("activateBubbles called");
+
+  digitalWrite(LED_PIN, HIGH);
+  delay(BUBBLE_TIME);
+  digitalWrite(LED_PIN, LOW);
+  delay(25);
 }
