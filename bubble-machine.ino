@@ -6,6 +6,7 @@
   Created for noycebru www.twitch.tv/noycebru
  *******************************************************************/
 #include "bubble-machine.h"
+#include "robot_wifi.h"
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 
@@ -109,17 +110,13 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial.println("] ");
   Serial.println(response);
 
-  // TODO: find the correct value to insert
-  if((response.indexOf("subscriber") > -1) || (response.indexOf("slap-redeem-id-here") > -1))
-  {
-    // We need to turn the bubbles on
-    activateBubbles();
-  }
+  // We need to turn the robot on
+  activateRobot();
 }
 
-void activateBubbles() {
+void activateRobot() {
 
-  Serial.print("activateBubbles called");
+  Serial.print("activateRobot called");
 
   digitalWrite(LED_PIN, HIGH);
   delay(BUBBLE_TIME);
