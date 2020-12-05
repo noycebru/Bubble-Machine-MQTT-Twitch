@@ -10,8 +10,8 @@
 // Configure your default pin numbers
 const int LED_PIN = 5;
 
-// The amount of time to run the bubble machine
-const int BUBBLE_TIME = 10000; // time in ms
+// The amount of time to activate the robot
+const int ACTIVATE_TIME_DEFAULT = 10000; // time in ms
 
 //------- Update the following! ------
 const String MQTT_ID = "bubble-machine-001"; // ID for this client when connecting to MQTT

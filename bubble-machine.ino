@@ -110,16 +110,31 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial.println("] ");
   Serial.println(response);
 
+  // We need to set the default time for the older message format
+  long activateTime = ACTIVATE_TIME_DEFAULT;
+
+  // This is quick and dirty with minimal input checking
+  // We are the only ones sending this data so we shouldn't have to worry
+  if (response.indexOf(",") != -1) {
+    // It looks like we are receiving the new format so try and parse the activation time
+    int delimiterLocation = response.indexOf(",");
+    activateTime = response.substring(delimiterLocation + 1, response.length()).toFloat();
+  }
+
   // We need to turn the robot on
-  activateRobot();
+  activateRobot(activateTime);
 }
 
-void activateRobot() {
+void activateRobot(long activateTime) {
 
-  Serial.print("activateRobot called");
+  Serial.print("activateRobot called: ");
+  Serial.println(activateTime);
 
   digitalWrite(LED_PIN, HIGH);
-  delay(BUBBLE_TIME);
+  delay(activateTime);
   digitalWrite(LED_PIN, LOW);
   delay(25);
+
+  Serial.println("activateRobot completed!");
+  Serial.println();
 }
