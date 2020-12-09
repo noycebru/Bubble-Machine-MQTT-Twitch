@@ -34,7 +34,7 @@ void setupSerial() {
 }
 
 void setupPins() {
-    pinMode(LED_PIN, OUTPUT);
+    pinMode(RELAY_PIN, OUTPUT);
 }
 
 void setupWIFI() {
@@ -130,9 +130,9 @@ void activateRobot(long activateTime) {
   Serial.print("activateRobot called: ");
   Serial.println(activateTime);
 
-  digitalWrite(LED_PIN, HIGH);
+  digitalWrite(RELAY_PIN, HIGH);
   delay(activateTime);
-  digitalWrite(LED_PIN, LOW);
+  digitalWrite(RELAY_PIN, LOW);
   delay(25);
 
   Serial.println("activateRobot completed!");
