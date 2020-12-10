@@ -8,7 +8,7 @@
 #define BUBBLE_MACHINE_H
 
 // Configure your default pin numbers
-const int LED_PIN = 5;
+const int RELAY_PIN = 5;
 
 // The amount of time to activate the robot
 const int ACTIVATE_TIME_DEFAULT = 10000; // time in ms
